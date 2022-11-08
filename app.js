@@ -81,31 +81,35 @@ function getPosts(res) {
         });
 
         resp.on('end', () => {
-            try {
-                JSON.parse(data).data.user.edge_owner_to_timeline_media.edges.forEach((item) => {
-                    images.push(item.node.display_url);
-                });
-                images.forEach((item, index) => {
-                    download(item, 'public/images/' + (index + 1) + '.jpg', function () {
-                    }).then(() => {
-                        uploadFile('public/images/' + (index + 1) + '.jpg').catch(console.error).then(() => {
-                            bucket.file((index + 1) + '.jpg').getSignedUrl({
-                                action: 'read',
-                                expires: '03-09-2491'
-                            }).then((url) => {
-                                urls.push(url[0]);
-                                if (index == images.length - 1) {
-                                    res.send(urls);
-                                    deleteImages();
-                                }
+            if (resp.statusCode == 200 && data != null) {
+                try {
+                    JSON.parse(data).data.user.edge_owner_to_timeline_media.edges.forEach((item) => {
+                        images.push(item.node.display_url);
+                    });
+                    images.forEach((item, index) => {
+                        download(item, 'public/images/' + (index + 1) + '.jpg', function () {
+                        }).then(() => {
+                            uploadFile('public/images/' + (index + 1) + '.jpg').catch(console.error).then(() => {
+                                bucket.file((index + 1) + '.jpg').getSignedUrl({
+                                    action: 'read',
+                                    expires: '03-09-2491'
+                                }).then((url) => {
+                                    urls.push(url[0]);
+                                    if (index == images.length - 1) {
+                                        res.send(urls);
+                                        deleteImages();
+                                    }
+                                });
                             });
                         });
+
                     });
 
-                });
-
-            } catch (error) {
-                console.log(error);
+                } catch (error) {
+                    console.log(error);
+                }
+            } else {
+                getPosts(res);
             }
         });
 
