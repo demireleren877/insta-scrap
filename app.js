@@ -1,11 +1,14 @@
 const https = require('https');
 const fs = require('fs');
+const express = require('express');
 const request = require('request');
 var admin = require("firebase-admin");
 const uuid = require('uuid-v4');
 const path = require('path');
+const route = express();
 
 var serviceAccount = require("./service-account-key.json");
+const { app } = require('firebase-admin');
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
@@ -70,6 +73,7 @@ function getPosts(res) {
     https.get("https://i.instagram.com/api/v1/users/web_profile_info/?username=soft.hubtr", options, (resp) => {
         let data = '';
         let images = [];
+        let urls = [];
 
 
         resp.on('data', (chunk) => {
@@ -82,9 +86,20 @@ function getPosts(res) {
                     images.push(item.node.display_url);
                 });
                 images.forEach((item, index) => {
-                    download(item, 'public/images/' + index + '.jpg', function () {
+                    download(item, 'public/images/' + (index + 1) + '.jpg', function () {
                     }).then(() => {
-                        uploadFile('public/images/' + index + '.jpg').catch(console.error)
+                        uploadFile('public/images/' + (index + 1) + '.jpg').catch(console.error).then(() => {
+                            bucket.file((index + 1) + '.jpg').getSignedUrl({
+                                action: 'read',
+                                expires: '03-09-2491'
+                            }).then((url) => {
+                                urls.push(url[0]);
+                                if (index == images.length - 1) {
+                                    res.send(urls);
+                                    deleteImages();
+                                }
+                            });
+                        });
                     });
 
                 });
@@ -100,6 +115,15 @@ function getPosts(res) {
     });
 }
 
-setInterval(() => {
-    getPosts();
-}, 5000);
+// setInterval(() => {
+//     getPosts();
+// }, 5000);
+
+
+route.get('/', (req, res) => {
+    getPosts(res);
+});
+
+route.listen(process.env.PORT || 3000, () => {
+    console.log("Server is running on port 3000");
+});
