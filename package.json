@@ -1,0 +1,19 @@
+{
+  "name": "insta-scrap",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "firebase-admin": "^11.2.0",
+    "https": "^1.0.0",
+    "request": "^2.88.2",
+    "uuid-v4": "^0.1.0"
+  }
+}
